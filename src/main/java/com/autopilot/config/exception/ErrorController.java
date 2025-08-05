@@ -18,7 +18,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 @ControllerAdvice
 public class ErrorController {
 
-    // Using AppLogger for better formatting and consistent log structure
     private final AppLogger log = new AppLogger(LoggerFactory.getLogger(ErrorController.class));
 
     /**
@@ -109,7 +108,8 @@ public class ErrorController {
     }
 
     /**
-     * Catch-all for any uncaught exceptions to prevent app crash and give meaningful response.
+     * Catch-all for any uncaught except
+     * ions to prevent app crash and give meaningful response.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApplicationException> handleUnexpectedException(Exception ex) {
