@@ -12,12 +12,23 @@ import java.util.concurrent.CompletableFuture;
 public interface IBaseQueuePublisher {
 
     /**
-     * Publishes a message directly to a queue.
+     * Publishes with additional metadata like correlationId, timestamp, etc.
      *
      * @param queueName Name of the queue
      * @param payload   Message wrapped in QueuePayload
+     * @param headers   Optional headers/metadata
      */
-    void publish(String queueName, QueuePayload<?> payload) throws ApplicationException;
+    void publish(String queueName, QueuePayload<?> payload, Map<String, Object> headers);
+
+    /**
+     * Asynchronously publishes with additional metadata like correlationId, timestamp, etc.
+     *
+     * @param queueName Name of the queue
+     * @param payload   Message wrapped in QueuePayload
+     * @param headers   Optional headers/metadata
+     * @return CompletableFuture representing the async operation
+     */
+    CompletableFuture<Void> publishAsync(String queueName, QueuePayload<?> payload, Map<String, Object> headers);
 
     /**
      * Publishes a message to an exchange with a routing key (for topic or direct exchanges).
@@ -27,23 +38,16 @@ public interface IBaseQueuePublisher {
      * @param payload      Message wrapped in QueuePayload
      * @param headers      Optional headers/metadata
      */
-    void publishWithRoutingKey(String exchangeName, String routingKey, QueuePayload<?> payload, Map<String, Object> headers) throws ApplicationException;
+    void publishWithRoutingKey(String exchangeName, String routingKey, QueuePayload<?> payload, Map<String, Object> headers);
 
     /**
-     * Asynchronously publishes a message to a queue.
+     * Asynchronously publishes a message to an exchange with a routing key.
      *
-     * @param queueName Name of the queue
-     * @param payload   Message wrapped in QueuePayload
-     * @return A CompletableFuture for async handling
+     * @param exchangeName Exchange to publish to
+     * @param routingKey   Routing key for routing to correct queue
+     * @param payload      Message wrapped in QueuePayload
+     * @param headers      Optional headers/metadata
+     * @return CompletableFuture representing the async operation
      */
-    CompletableFuture<Void> publishAsync(String queueName, QueuePayload<?> payload);
-
-    /**
-     * Publishes with additional metadata like correlationId, timestamp, etc.
-     *
-     * @param queueName Name of the queue
-     * @param payload   Message wrapped in QueuePayload
-     * @param headers   Optional headers/metadata
-     */
-    void publish(String queueName, QueuePayload<?> payload, Map<String, Object> headers) throws ApplicationException;
+    CompletableFuture<Void> publishAsyncWithRoutingKey(String exchangeName, String routingKey, QueuePayload<?> payload, Map<String, Object> headers);
 }
