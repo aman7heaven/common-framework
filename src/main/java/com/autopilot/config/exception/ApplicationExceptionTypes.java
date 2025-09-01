@@ -10,5 +10,8 @@ public class ApplicationExceptionTypes {
     public static final Triple GENERIC_EXCEPTION = new Triple(1004, HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong.");
     public static final Triple INVALID_HTTP_METHOD_REQUEST = new Triple(1005, HttpStatus.METHOD_NOT_ALLOWED, "Unsupported method. Supported: %s");
 
+    public static final Triple METHOD_NOT_SUPPORTED = new Triple(1006, HttpStatus.METHOD_NOT_ALLOWED, "Unsupported method. Supported: %s");
+
+
     public record Triple(int code, HttpStatus status, String message) {}
 }
