@@ -1,125 +1,158 @@
 package com.autopilot.config.exception;
 
 import com.autopilot.config.logging.AppLogger;
+import com.autopilot.utils.JsonUtils;
+import com.fasterxml.jackson.core.JsonParseException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Global Exception Handler
- * This handles all common exceptions and formats a proper API response.
+ * Global level error handler
  */
 @ControllerAdvice
 public class ErrorController {
 
     private final AppLogger log = new AppLogger(LoggerFactory.getLogger(ErrorController.class));
 
-    /**
-     * Handle custom application exceptions (your own thrown errors).
-     */
+    @Autowired
+    private HttpServletRequest httpServletRequest;
+
     @ExceptionHandler(ApplicationException.class)
-    public ResponseEntity<ApplicationException> handleAppException(ApplicationException ex) {
-        log.error("ApplicationException occurred: " + ex.getMessage(), ex);
-        return new ResponseEntity<>(ex, ex.getHeaders(), ex.getStatus());
+    public ResponseEntity<ApplicationException> handleCustomErrorExceptions(@NotNull Exception e) {
+        log.debug("handleCustomErrorExceptions - Exception thrown - {}", e.getMessage());
+        ApplicationException applicationException = (ApplicationException) e;
+        return ResponseEntity
+                .status(applicationException.getStatus())
+                .headers(applicationException.getHeaders())
+                .body(applicationException);
     }
 
-    /**
-     * Handle incorrect path or query param data types (e.g., passing "abc" when expecting Long).
-     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApplicationException> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        log.error("MethodArgumentTypeMismatchException: " + ex.getMessage(), ex);
+    public ResponseEntity<ApplicationException> handleTypeMismatchException(
+            @NotNull MethodArgumentTypeMismatchException e
+    ) {
+        String fieldName = e.getName();
+        String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "Unknown";
+        log.info("handleTypeMismatchException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
 
-        String formattedMsg = ApplicationExceptionTypes.INVALID_PARAMS.message()
-                .formatted(ex.getName(), ex.getRequiredType().getSimpleName());
-
-        return ResponseEntity.status(ApplicationExceptionTypes.INVALID_PARAMS.status())
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.INVALID_PARAMS.status())
                 .body(new ApplicationException(
                         ApplicationExceptionTypes.INVALID_PARAMS.code(),
                         ApplicationExceptionTypes.INVALID_PARAMS.status(),
-                        formattedMsg));
+                        String.format(ApplicationExceptionTypes.INVALID_PARAMS.message(), fieldName, requiredType)
+                ));
     }
 
-    /**
-     * Triggered when a required header is missing from the request.
-     */
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApplicationException> handleRequestParamKeyMissingException(MissingServletRequestPartException e) {
+        String key = e.getRequestPartName();
+        log.info("handleRequestParamKeyMissingException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
+
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.REQUIRED_REQUEST_PARAM_KEY_MISSING.status())
+                .body(new ApplicationException(
+                        ApplicationExceptionTypes.REQUIRED_REQUEST_PARAM_KEY_MISSING.code(),
+                        ApplicationExceptionTypes.REQUIRED_REQUEST_PARAM_KEY_MISSING.status(),
+                        String.format(ApplicationExceptionTypes.REQUIRED_REQUEST_PARAM_KEY_MISSING.message(), key)
+                ));
+    }
+
     @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<ApplicationException> handleMissingHeader(MissingRequestHeaderException ex) {
-        log.warn("MissingRequestHeaderException: " + ex.getMessage());
+    public ResponseEntity<ApplicationException> handleRequestHeaderException(MissingRequestHeaderException e) {
+        log.info("handleRequestHeaderException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
 
-        String msg = ApplicationExceptionTypes.MISSING_HEADER.message().formatted(ex.getHeaderName());
-
-        return ResponseEntity.status(ApplicationExceptionTypes.MISSING_HEADER.status())
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.MISSING_HEADER.status())
                 .body(new ApplicationException(
                         ApplicationExceptionTypes.MISSING_HEADER.code(),
                         ApplicationExceptionTypes.MISSING_HEADER.status(),
-                        msg));
+                        String.format(ApplicationExceptionTypes.MISSING_HEADER.message(), e.getHeaderName())
+                ));
     }
 
-    /**
-     * Triggered when a request param (e.g., ?page=) is missing.
-     */
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ApplicationException> handleMissingParam(MissingServletRequestParameterException ex) {
-        log.warn("MissingServletRequestParameterException: " + ex.getMessage());
-
-        return ResponseEntity.status(ApplicationExceptionTypes.REQUEST_ERROR.status())
-                .body(new ApplicationException(
-                        ApplicationExceptionTypes.REQUEST_ERROR.code(),
-                        ApplicationExceptionTypes.REQUEST_ERROR.status(),
-                        ApplicationExceptionTypes.REQUEST_ERROR.message()));
-    }
-
-    /**
-     * Triggered when the JSON in the request body is malformed or unreadable.
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApplicationException> handleUnreadableJson(HttpMessageNotReadableException ex) {
-        log.warn("HttpMessageNotReadableException: " + ex.getMessage());
+    public ResponseEntity<ApplicationException> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.info("handleHttpMessageNotReadableException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
 
-        return ResponseEntity.status(ApplicationExceptionTypes.GENERIC_EXCEPTION.status())
-                .body(new ApplicationException(
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.code(),
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.status(),
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.message()));
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.GENERIC_BAD_REQUEST.status())
+                .body(new ApplicationException(ApplicationExceptionTypes.GENERIC_BAD_REQUEST));
     }
 
-    /**
-     * Triggered when HTTP method used is invalid (e.g., POST instead of GET).
-     */
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApplicationException> handleBindException(BindException e) {
+        log.info("handleBindException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
+
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.REQUEST_ERROR.status())
+                .body(new ApplicationException(ApplicationExceptionTypes.REQUEST_ERROR));
+    }
+
+    @ExceptionHandler(JsonParseException.class)
+    public ResponseEntity<ApplicationException> handleJsonParseException(JsonParseException e) {
+        log.info("handleJsonParseException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
+
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.REQUEST_ERROR.status())
+                .body(new ApplicationException(ApplicationExceptionTypes.REQUEST_ERROR));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApplicationException> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.info("handleNoResourceFoundException - Exception thrown - {}, for path: {}", e.getMessage(), e.getResourcePath());
+
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.RESOURCE_NOT_FOUND.status())
+                .body(new ApplicationException(ApplicationExceptionTypes.RESOURCE_NOT_FOUND));
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApplicationException> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
-        log.warn("HttpRequestMethodNotSupportedException: " + ex.getMessage());
+    public ResponseEntity<ApplicationException> handleMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        log.error("handleMethodNotSupportedException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
 
-        String supported = String.join(", ", ex.getSupportedMethods());
-        String msg = ApplicationExceptionTypes.INVALID_HTTP_METHOD_REQUEST.message().formatted(supported);
-
-        return ResponseEntity.status(ApplicationExceptionTypes.INVALID_HTTP_METHOD_REQUEST.status())
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.INVALID_HTTP_METHOD.status())
                 .body(new ApplicationException(
-                        ApplicationExceptionTypes.INVALID_HTTP_METHOD_REQUEST.code(),
-                        ApplicationExceptionTypes.INVALID_HTTP_METHOD_REQUEST.status(),
-                        msg));
+                        ApplicationExceptionTypes.INVALID_HTTP_METHOD.code(),
+                        ApplicationExceptionTypes.INVALID_HTTP_METHOD.status(),
+                        String.format(ApplicationExceptionTypes.INVALID_HTTP_METHOD.message(), JsonUtils.toJson(e.getSupportedMethods()))
+                ));
     }
 
-    /**
-     * Catch-all for any uncaught except
-     * ions to prevent app crash and give meaningful response.
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApplicationException> handleUnexpectedException(Exception ex) {
-        log.error("Unexpected Exception: " + ex.getMessage(), ex);
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApplicationException> handleRequestParameterException(MissingServletRequestParameterException e) {
+        log.error("handleRequestParameterException - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
 
-        return ResponseEntity.status(ApplicationExceptionTypes.GENERIC_EXCEPTION.status())
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.REQUEST_ERROR.status())
+                .body(new ApplicationException(ApplicationExceptionTypes.REQUEST_ERROR));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApplicationException> handleExceptions(Exception e) {
+        log.error("handleExceptions - Exception thrown - {}, stackTrace - {}", e.getMessage(), ExceptionUtils.getStackTrace(e));
+
+        return ResponseEntity
+                .status(ApplicationExceptionTypes.GENERIC_EXCEPTION.status())
                 .body(new ApplicationException(
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.code(),
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.status(),
-                        ApplicationExceptionTypes.GENERIC_EXCEPTION.message(),
-                        ex.getMessage()));
+                        ApplicationExceptionTypes.GENERIC_EXCEPTION,
+                        ExceptionUtils.getStackTrace(e)
+                ));
     }
 }
