@@ -25,43 +25,43 @@ public class ApplicationException extends RuntimeException {
     private HttpHeaders headers;
 
     public ApplicationException(
-            @NotNull ApplicationExceptionTypes applicationExceptionTypes,
+            @NotNull ApplicationExceptionTypes applicationExceptionType,
             HttpHeaders headers,
             Object details
     ) {
-        this.code = applicationExceptionTypes.code();
-        this.status = applicationExceptionTypes.status();
-        this.message = applicationExceptionTypes.message();
+        this.code = applicationExceptionType.code();
+        this.status = applicationExceptionType.status();
+        this.message = applicationExceptionType.message();
         this.details = details;
         this.headers = headers;
     }
 
     public ApplicationException(
-            @NotNull ApplicationExceptionTypes applicationExceptionTypes,
+            @NotNull ApplicationExceptionTypes applicationExceptionType,
             Object details
     ) {
-        this.code = applicationExceptionTypes.code();
-        this.status = applicationExceptionTypes.status();
-        this.message = applicationExceptionTypes.message();
+        this.code = applicationExceptionType.code();
+        this.status = applicationExceptionType.status();
+        this.message = applicationExceptionType.message();
         this.details = details;
     }
 
     public ApplicationException(
-            @NotNull ApplicationExceptionTypes applicationExceptionTypes,
+            @NotNull ApplicationExceptionTypes applicationExceptionType,
             HttpHeaders headers
     ) {
-        this.code = applicationExceptionTypes.code();
-        this.status = applicationExceptionTypes.status();
-        this.message = applicationExceptionTypes.message();
+        this.code = applicationExceptionType.code();
+        this.status = applicationExceptionType.status();
+        this.message = applicationExceptionType.message();
         this.headers = headers;
     }
 
     public ApplicationException(
-            @NotNull ApplicationExceptionTypes applicationExceptionTypes
+            @NotNull ApplicationExceptionTypes applicationExceptionType
     ) {
-        this.code = applicationExceptionTypes.code();
-        this.status = applicationExceptionTypes.status();
-        this.message = applicationExceptionTypes.message();
+        this.code = applicationExceptionType.code();
+        this.status = applicationExceptionType.status();
+        this.message = applicationExceptionType.message();
     }
 
     public ApplicationException(
