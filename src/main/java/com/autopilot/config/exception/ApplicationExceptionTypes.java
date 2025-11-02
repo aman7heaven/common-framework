@@ -27,7 +27,6 @@ public record ApplicationExceptionTypes(Integer code, HttpStatus status, String 
     public static final ApplicationExceptionTypes TO_MANY_LOGIN_ATTEMPTS = new ApplicationExceptionTypes(11, HttpStatus.TOO_MANY_REQUESTS, "Too many failed Attempts. Please try again after 10 minutes.");
     public static final ApplicationExceptionTypes INVALID_AUTH_DETAIL = new ApplicationExceptionTypes(12, HttpStatus.BAD_REQUEST, "Invalid Credentials, Please login with valid credentials details");
 
-    public static final ApplicationExceptionTypes UNAUTHORIZED = new ApplicationExceptionTypes(13, HttpStatus.UNAUTHORIZED, "Unauthorized");
     public static final ApplicationExceptionTypes METHOD_NOT_SUPPORTED = new ApplicationExceptionTypes(14, HttpStatus.METHOD_NOT_ALLOWED, "Method not supported: %s");
     public static final ApplicationExceptionTypes EXPERTISE_DOES_NOT_EXISTS = new ApplicationExceptionTypes(15, HttpStatus.NOT_FOUND, "Expertise does not exists");
     public static final ApplicationExceptionTypes SKILL_DOES_NOT_EXISTS = new ApplicationExceptionTypes(16, HttpStatus.NOT_FOUND, "Skill does not exists");
@@ -37,5 +36,20 @@ public record ApplicationExceptionTypes(Integer code, HttpStatus status, String 
     public static final ApplicationExceptionTypes INVALID_EXPERIENCE_DATES = new ApplicationExceptionTypes(20, HttpStatus.BAD_REQUEST, "Please provide valid experience dates: if you’re currently working here, remove the end date; if you’re not, please add one.");
     public static final ApplicationExceptionTypes FAILED_TO_DESERIALIZE_QUEUE_PAYLOAD = new ApplicationExceptionTypes(21, HttpStatus.INTERNAL_SERVER_ERROR, "Failed to deserialize queue payload");
     public static final ApplicationExceptionTypes CLOUDINARY_UPLOAD_FAILED_USER_FRIENDLY = new ApplicationExceptionTypes(22, HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while uploading your file. Please try again later.");
+    public static final ApplicationExceptionTypes KEY_LOAD_ERROR = new ApplicationExceptionTypes(23, HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while loading cryptographic keys. Please try again later.");
+    public static final ApplicationExceptionTypes ADMIN_ALREADY_EXISTS = new ApplicationExceptionTypes(24, HttpStatus.CONFLICT, "An admin account already exists. Multiple admin registrations are not allowed.");
+
+    // When the JWT token is missing or not provided
+    public static final ApplicationExceptionTypes MISSING_AUTH_TOKEN = new ApplicationExceptionTypes(13, HttpStatus.UNAUTHORIZED, "Authorization token is missing.");
+    // When the token signature or structure is invalid (tampered token)
+    public static final ApplicationExceptionTypes INVALID_AUTH_TOKEN = new ApplicationExceptionTypes(14, HttpStatus.UNAUTHORIZED, "Invalid or corrupted token.");
+    // When the JWT token is expired
+    public static final ApplicationExceptionTypes EXPIRED_AUTH_TOKEN = new ApplicationExceptionTypes(15, HttpStatus.UNAUTHORIZED, "Your session has expired. Please log in again.");
+    // When user tries to access a resource they don't have permissions for
+    public static final ApplicationExceptionTypes ACCESS_DENIED = new ApplicationExceptionTypes(17, HttpStatus.FORBIDDEN, "You do not have permission to access this resource.");
+    // When JWT verification fails due to unknown or internal reason
+    public static final ApplicationExceptionTypes JWT_VALIDATION_FAILED = new ApplicationExceptionTypes(19, HttpStatus.INTERNAL_SERVER_ERROR, "Unable to validate authentication token.");
+    // When key mismatch or public key not found for verifying signature
+    public static final ApplicationExceptionTypes JWT_SIGNATURE_VERIFICATION_FAILED = new ApplicationExceptionTypes(20, HttpStatus.UNAUTHORIZED, "Token signature verification failed.");
 
 }
