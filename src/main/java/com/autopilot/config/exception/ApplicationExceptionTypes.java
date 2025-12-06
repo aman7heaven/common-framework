@@ -51,5 +51,8 @@ public record ApplicationExceptionTypes(Integer code, HttpStatus status, String 
     public static final ApplicationExceptionTypes JWT_VALIDATION_FAILED = new ApplicationExceptionTypes(19, HttpStatus.INTERNAL_SERVER_ERROR, "Unable to validate authentication token.");
     // When key mismatch or public key not found for verifying signature
     public static final ApplicationExceptionTypes JWT_SIGNATURE_VERIFICATION_FAILED = new ApplicationExceptionTypes(20, HttpStatus.UNAUTHORIZED, "Token signature verification failed.");
-
+    public static final ApplicationExceptionTypes INVALID_PASSWORD_PAYLOAD = new ApplicationExceptionTypes(21, HttpStatus.BAD_REQUEST, "Invalid request. Please provide old and new password.");
+    public static final ApplicationExceptionTypes ADMIN_NOT_FOUND = new ApplicationExceptionTypes(22, HttpStatus.BAD_REQUEST, "Admin account not found. Please try again later.");
+    public static final ApplicationExceptionTypes INVALID_OLD_PASSWORD = new ApplicationExceptionTypes(23, HttpStatus.BAD_REQUEST, "Old password is incorrect. Please enter the correct current password.");
+    public static final ApplicationExceptionTypes PASSWORD_SAME_AS_OLD = new ApplicationExceptionTypes(24, HttpStatus.BAD_REQUEST, "New password cannot be the same as the old password.");
 }
